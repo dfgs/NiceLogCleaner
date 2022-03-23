@@ -36,7 +36,14 @@ class ScreenLogger:BaseLogger
 		}		 
     }
 }
-
+class NullLogger:BaseLogger 
+{
+    
+	[void] Log([LogLevel]$Level, [string]$Message) 
+	{
+		 
+    }
+}
 class  BaseChildFolderProvider 
 {
     [System.IO.FileSystemInfo[]] GetChildFolders([string]$ParentFolder) 
@@ -274,7 +281,16 @@ class ArchiveProcessor:BaseArchiveProcessor
 
 
 
-$logger=[ScreenLogger]::new()
+if ($PSBoundParameters.ContainsKey('Debug') -and [bool]$PSBoundParameters.item("Debug"))
+{
+	$logger=[ScreenLogger]::new()
+}
+else
+{
+	$logger=[NullLogger]::new()
+}
+
+
 $folderChecker=[FolderChecker]::new($logger)
 $backupFolderFactory=[BackupFolderFactory]::new($logger,$folderChecker)
 $childFolderProvider=[ChildFolderProvider]::new($logger)
