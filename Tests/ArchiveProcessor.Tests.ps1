@@ -2,23 +2,15 @@ BeforeAll {
     . $PSScriptRoot/../CleanLogs.ps1
 }
 Describe 'ArchiveProcessor tests' {
-	It 'FolderChecker should find C: path'	{
+	It 'ArchiveProcessor should move files'	{
 		$logger=[NullLogger]::new()
-		$childFolderProvider=[ChildFolderProvider]::new($logger)
+		$childFolderProvider=[MockedChildFolderProvider]::new()
 		$archiveFilter=[ArchiveFilter]::new($logger)
-		$folderMover=[FolderMover]::new($logger)
+		$folderMover=[MockedFolderMover]::new()
 
-		$archiveProcessor = [ArchiveProcessor]::new($logger,$childFolderProvider,$archiveFilter,$folderMover)		
-		$folderChecker.FolderExists('c:') | Should -Be $true
+		$archiveProcessor = [ArchiveProcessor]::new($logger,$childFolderProvider,$archiveFilter,$folderMover)
+		$archiveProcessor.ProcessArchive("D:\Program Files\Nice Systems\Logs","D:\Backup\Logs\Component1\Archive")
+		$folderMover.MovedCount | Should -Be 4
 	}
-	It 'FolderChecker should find C:\Windows path'	{
-		$logger=[NullLogger]::new()
-		$folderChecker=[FolderChecker]::new($logger)
-		$folderChecker.FolderExists('c:\Windows') | Should -Be $true
-	}
-	It 'FolderChecker should not find Z:\no_exists path'	{
-		$logger=[NullLogger]::new()
-		$folderChecker=[FolderChecker]::new($logger)
-		$folderChecker.FolderExists('Z:\no_exists') | Should -Be $false
-	}
+	
 }

@@ -90,7 +90,49 @@ class ChildFolderProvider:BaseChildFolderProvider
 		return $childFolders
     }
 }
+class MockedChildFolderProvider:BaseChildFolderProvider 
+{
 
+	MockedChildFolderProvider()
+	{
+    }
+
+	[File[]] GetChildFolders([string]$ParentFolder) 
+	{
+		if ($ParentFolder -eq "D:\Program Files\Nice Systems\Logs")
+		{
+			$childFolders=@(
+				[File]::new("Component1","D:\Program Files\Nice Systems\Logs\Component1",[datetime]::parseexact('2021-12-01', 'yyyy-MM-dd', $null)),
+				[File]::new("Component2","D:\Program Files\Nice Systems\Logs\Component2",[datetime]::parseexact('2020-12-01', 'yyyy-MM-dd', $null)),
+				[File]::new("Component3","D:\Program Files\Nice Systems\Logs\Component3",[datetime]::parseexact('2022-01-15', 'yyyy-MM-dd', $null)),
+				[File]::new("Component4","D:\Program Files\Nice Systems\Logs\Component4",[datetime]::parseexact('2021-03-05', 'yyyy-MM-dd', $null)),
+				[File]::new("Component5","D:\Program Files\Nice Systems\Logs\Component5",[datetime]::parseexact('2021-02-11', 'yyyy-MM-dd', $null))
+				)
+		}
+		elseif ($ParentFolder -match "D:\\Program Files\\Nice Systems\\Logs\\Component.$")
+		{
+			$childFolders=@(
+				[File]::new("Log","$ParentFolder\Log",[datetime]::parseexact('2021-12-01', 'yyyy-MM-dd', $null)),
+				[File]::new("Archive","$ParentFolder\Log",[datetime]::parseexact('2020-12-01', 'yyyy-MM-dd', $null))
+				)
+		}
+		elseif ($ParentFolder -match "D:\\Program Files\\Nice Systems\\Logs\\Component.\\Archive")
+		{
+			$childFolders=@(
+				[File]::new("Name1","$ParentFolder\Name1",[datetime]::parseexact('2021-12-01', 'yyyy-MM-dd', $null)),
+				[File]::new("Name2","$ParentFolder\Name2",[datetime]::parseexact('2020-12-01', 'yyyy-MM-dd', $null)),
+				[File]::new("Name3","$ParentFolder\Name3",[datetime]::parseexact('2022-01-15', 'yyyy-MM-dd', $null)),
+				[File]::new("Name4","$ParentFolder\Name4",[datetime]::parseexact('2021-03-05', 'yyyy-MM-dd', $null)),
+				[File]::new("Name5","$ParentFolder\Name5",[datetime]::parseexact('2021-02-11', 'yyyy-MM-dd', $null))
+			)
+		}
+		else 
+		{
+			$childFolders=@()
+		}
+		return $childFolders
+    }
+}
 class BaseFolderChecker
 {
 	[bool] FolderExists([string]$Path) 
@@ -181,7 +223,21 @@ class BackupFolderFactory:BaseBackupFolderFactory
 		}
     }
 }
+class MockedBackupFolderFactory:BaseBackupFolderFactory 
+{
+	
+	[int] $CreatedCount
 
+	MockedBackupFolderFactory()
+	{
+        $this.CreatedCount = 0
+    }
+
+	[void] CreateFolder([string]$Path,[string]$FolderName) 
+	{
+		$this.CreatedCount+=1
+    }
+}
 
 class  BaseFolderMover 
 {
@@ -206,6 +262,22 @@ class FolderMover:BaseFolderMover
 		
 		$this.logger.Log( [LogLevel]::Info, "Moving folder $Source to $Destination" )
 		Move-Item -Path $Source -Destination $Destination 
+    }
+}
+
+class MockedFolderMover:BaseFolderMover 
+{
+
+	[int] $MovedCount
+
+	FolderMover()
+	{
+		$this.MovedCount=0
+    }
+	
+    [void] MoveFolder([string]$Source,[string]$Destination) 
+	{
+		$this.MovedCount += 1
     }
 }
 
