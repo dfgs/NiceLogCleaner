@@ -9,6 +9,20 @@ enum LogLevel
 	Error = 3
 }
 
+class File
+{
+	[string] $Name
+	[string] $FullName
+	[DateTime] $LastWriteTime
+
+	File([string]$Name,[string]$FullName,[DateTime]$LastWriteTime)
+	{
+		$this.Name=$Name
+		$this.FullName=$FullName
+		$this.LastWriteTime=$LastWriteTime
+	}
+}
+
 class  BaseLogger
 {
 
@@ -46,7 +60,7 @@ class NullLogger:BaseLogger
 }
 class  BaseChildFolderProvider 
 {
-    [System.IO.FileSystemInfo[]] GetChildFolders([string]$ParentFolder) 
+    [File[]] GetChildFolders([string]$ParentFolder) 
 	{
 		write-host "Method not implemented" 
 		return @()
@@ -62,13 +76,13 @@ class ChildFolderProvider:BaseChildFolderProvider
         $this.logger = $Logger
     }
 
-	[System.IO.FileSystemInfo[]] GetChildFolders([string]$ParentFolder) 
+	[File[]] GetChildFolders([string]$ParentFolder) 
 	{
 		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
 
 		$this.logger.Log( [LogLevel]::Info, "Listing child folders in $ParentFolder" )
 
-		[System.IO.FileSystemInfo[]] $childFolders=Get-ChildItem -Path $ParentFolder -Directory -Force -ErrorAction SilentlyContinue
+		[File[]] $childFolders=Get-ChildItem -Path $ParentFolder -Directory -Force | ForEach-Object {[File]::new($_.Name,$_.FullName,$_.LastWriteTime)}
 		foreach ($childFolder in $childFolders)
 		{
 			$this.logger.Log( [LogLevel]::Debug, "Found folder $($childFolder.Name)" )
@@ -103,7 +117,7 @@ class FolderChecker:BaseFolderChecker
 
 class BaseArchiveFilter
 {
-	[System.IO.FileSystemInfo[]] GetOldestFolders([System.IO.FileSystemInfo[]]$Folders) 
+	[File[]] GetOldestFolders([File[]]$Folders) 
 	{
 		write-host "Method not implemented" 
 		return return @()
@@ -118,9 +132,13 @@ class ArchiveFilter:BaseArchiveFilter
 	{
         $this.logger = $Logger
     }
-	[System.IO.FileSystemInfo[]] GetOldestFolders([System.IO.FileSystemInfo[]]$Folders) 
+	[File[]] GetOldestFolders([File[]]$Folders) 
 	{
 		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		if ($Folders.Count -eq 0)
+		{
+			return @()
+		}
 		$sortedFolders=$Folders | Sort-Object -Property LastWriteTime -Descending
 		$newestFolder=$sortedFolders[0]
 		$this.logger.Log( [LogLevel]::Debug, "Newest archive folder is $($newestFolder.Name)" )
