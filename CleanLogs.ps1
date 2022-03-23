@@ -1,15 +1,18 @@
+[cmdletbinding(SupportsShouldProcess)]
 param ($NiceLogFolder='D:\Program Files\Nice Systems\Logs', $BackupFolder='d:\Backup\Logs')
 
 enum LogLevel 
 {
-    Debug
-    Info
-	Warning
-	Error
+    Debug = 0
+    Info = 1
+	Warning = 2
+	Error = 3
 }
 
 class  BaseLogger
 {
+
+
 	[void] Log([LogLevel]$Level, [string]$Message) 
 	{
 		write-host "Method not implemented" 
@@ -21,25 +24,170 @@ class ScreenLogger:BaseLogger
     
 	[void] Log([LogLevel]$Level, [string]$Message) 
 	{
+		
 		$date=Get-Date -Format "yyyy-MM-dd HH:mm:ss";
-		write-host "$date $Message" 
+		$method=(Get-PSCallStack)[1].FunctionName
+		switch ( $Level )
+		{
+			Debug { Write-Host "$date | $Level | $method | $Message" -ForegroundColor DarkGray    }
+			Info { Write-Host "$date | $Level | $method | $Message" -ForegroundColor White  }
+			Warning { Write-Host "$date | $Level | $method | $Message"-ForegroundColor Yellow   }
+			Error { Write-Host "$date | $Level | $method | $Message"-ForegroundColor Red }
+		}		 
     }
 }
 
-class  BaseFolderProvider 
+class  BaseChildFolderProvider 
 {
-    [string]$Brand
+    [System.IO.FileSystemInfo[]] GetChildFolders([string]$ParentFolder) 
+	{
+		write-host "Method not implemented" 
+		return @()
+    }
 }
 
-class FolderProvider:BaseFolderProvider 
+class ChildFolderProvider:BaseChildFolderProvider 
 {
-    
+	[BaseLogger] $logger
+
+	ChildFolderProvider([BaseLogger]$Logger)
+	{
+        $this.logger = $Logger
+    }
+
+	[System.IO.FileSystemInfo[]] GetChildFolders([string]$ParentFolder) 
+	{
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+
+		$this.logger.Log( [LogLevel]::Info, "Listing child folders in $ParentFolder" )
+
+		[System.IO.FileSystemInfo[]] $childFolders=Get-ChildItem -Path $ParentFolder -Directory -Force -ErrorAction SilentlyContinue
+		foreach ($childFolder in $childFolders)
+		{
+			$this.logger.Log( [LogLevel]::Debug, "Found folder $($childFolder.Name)" )
+		}
+		return $childFolders
+    }
+}
+
+class BaseFolderChecker
+{
+	[bool] FolderExists([string]$Path) 
+	{
+		write-host "Method not implemented" 
+		return $false
+    }
+}
+
+class FolderChecker:BaseFolderChecker
+{
+	[BaseLogger] $logger
+
+	FolderChecker([BaseLogger]$Logger)
+	{
+        $this.logger = $Logger
+    }
+	[bool] FolderExists([string]$Path) 
+	{
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		return Test-Path -Path "$Path"
+	}
+}
+
+class BaseArchiveFilter
+{
+	[System.IO.FileSystemInfo[]] GetOldestFolders([System.IO.FileSystemInfo[]]$Folders) 
+	{
+		write-host "Method not implemented" 
+		return return @()
+    }
+}
+
+class ArchiveFilter:BaseArchiveFilter
+{
+	[BaseLogger] $logger
+
+	ArchiveFilter([BaseLogger]$Logger)
+	{
+        $this.logger = $Logger
+    }
+	[System.IO.FileSystemInfo[]] GetOldestFolders([System.IO.FileSystemInfo[]]$Folders) 
+	{
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		$sortedFolders=$Folders | Sort-Object -Property LastWriteTime -Descending
+		$newestFolder=$sortedFolders[0]
+		$this.logger.Log( [LogLevel]::Debug, "Newest archive folder is $($newestFolder.Name)" )
+				
+		return $Folders | Where-Object { $_.Name -ne $newestFolder.Name }
+	}
+}
+
+class  BaseBackupFolderFactory 
+{
+    [void] CreateFolder([string]$Path,[string]$FolderName) 
+	{
+		write-host "Method not implemented" 
+    }
+}
+
+class BackupFolderFactory:BaseBackupFolderFactory 
+{
+	[BaseLogger] $logger
+	[BaseFolderChecker] $folderChecker
+
+	BackupFolderFactory([BaseLogger]$Logger,[BaseFolderChecker] $FolderChecker)
+	{
+        $this.logger = $Logger
+		$this.folderChecker=$FolderChecker
+    }
+
+	[void] CreateFolder([string]$Path,[string]$FolderName) 
+	{
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		$fullPath=Join-Path $Path $FolderName
+		if($this.folderChecker.FolderExists( $fullPath ))
+		{
+			$this.logger.Log( [LogLevel]::Info, "Backup folder $FolderName already exists in $Path" )
+		}
+		else 
+		{
+			$this.logger.Log( [LogLevel]::Info, "Creating backup folder $FolderName in $Path" )
+			New-Item -Path $Path -Name $FolderName -ItemType "directory"
+		}
+    }
+}
+
+
+class  BaseFolderMover 
+{
+    [void] MoveFolder([string]$Source,[string]$Destination) 
+	{
+		write-host "Method not implemented" 
+    }
+}
+
+class FolderMover:BaseFolderMover 
+{
+	[BaseLogger] $logger
+
+	FolderMover([BaseLogger]$Logger)
+	{
+        $this.logger = $Logger
+    }
+	
+    [void] MoveFolder([string]$Source,[string]$Destination) 
+	{
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		
+		$this.logger.Log( [LogLevel]::Info, "Moving folder $Source to $Destination" )
+		Move-Item -Path $Source -Destination $Destination 
+    }
 }
 
 class  BaseProcessor
 {
 	
-	[void] ProcessFolder([string]$slot) 
+	[void] ProcessFolder([string]$CurrentFolder,[string]$BackupFolder) 
 	{
 		write-host "Method not implemented" 
     }
@@ -47,20 +195,92 @@ class  BaseProcessor
 
 class Processor:BaseProcessor 
 {
+	[string] $archiveFolderName
 	[BaseLogger] $logger
+	[BaseChildFolderProvider] $childFolderProvider
+	[BaseBackupFolderFactory] $backupFolderFactory
+	[BaseArchiveProcessor] $archiveProcessor
 
-	Processor([BaseLogger]$Logger)
+	Processor([BaseLogger]$Logger,[string] $ArchiveFolderName,[BaseChildFolderProvider] $ChildFolderProvider,[BaseBackupFolderFactory] $BackupFolderFactory,[BaseArchiveProcessor] $ArchiveProcessor)
 	{
         $this.logger = $Logger
+		$this.archiveFolderName=$ArchiveFolderName
+		$this.childFolderProvider=$ChildFolderProvider
+		$this.backupFolderFactory=$BackupFolderFactory
+		$this.archiveProcessor=$ArchiveProcessor
     }
 	
-    [void] ProcessFolder([string]$slot) 
+    [void] ProcessFolder([string]$CurrentFolder,[string]$BackupFolder) 
 	{
-		$this.logger.Log( [LogLevel]::Debug, "Method overrided" )
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		$childFolders=$this.childFolderProvider.GetChildFolders($CurrentFolder);
+		foreach ($childFolder in $childFolders)
+		{
+			$this.backupFolderFactory.CreateFolder($BackupFolder,$childFolder.Name);
+
+			$newCurrentFolder=Join-Path $CurrentFolder $childFolder.Name
+			$newBackupFolder=Join-Path $BackupFolder $childFolder.Name
+
+			if ($childFolder.Name -eq $this.archiveFolderName)
+			{
+				$this.logger.Log( [LogLevel]::Info, "Found archive folder in $CurrentFolder" )
+				$this.archiveProcessor.ProcessArchive($newCurrentFolder,$newBackupFolder)
+			}
+			else 
+			{
+				$this.ProcessFolder($newCurrentFolder,$newBackupFolder )
+			}
+		}
     }
 }
 
-$logger=[ScreenLogger]::new()
-$processor = [Processor]::new($logger)
+class  BaseArchiveProcessor
+{
+	
+	[void] ProcessArchive([string]$CurrentFolder,[string]$BackupFolder) 
+	{
+		write-host "Method not implemented" 
+    }
+}
 
-$processor.ProcessFolder($NiceLogFolder);
+class ArchiveProcessor:BaseArchiveProcessor 
+{
+	[BaseLogger] $logger
+	[BaseChildFolderProvider] $childFolderProvider
+	[BaseArchiveFilter] $archiveFilter
+	[BaseFolderMover] $folderMover
+
+	ArchiveProcessor([BaseLogger]$Logger,[BaseChildFolderProvider] $ChildFolderProvider,[BaseArchiveFilter] $ArchiveFilter,[BaseFolderMover] $FolderMover)
+	{
+        $this.logger = $Logger
+		$this.childFolderProvider=$ChildFolderProvider
+		$this.archiveFilter=$ArchiveFilter
+		$this.folderMover=$FolderMover
+    }
+	
+    [void] ProcessArchive([string]$CurrentFolder,[string]$BackupFolder) 
+	{
+		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
+		$this.logger.Log( [LogLevel]::Info, "Filtering oldest archive folders" )
+		$childFolders=$this.childFolderProvider.GetChildFolders($CurrentFolder)
+		$filteredFolders=$this.archiveFilter.GetOldestFolders($childFolders)
+		foreach ($filteredFolder in $filteredFolders)
+		{
+			$this.folderMover.MoveFolder($filteredFolder.FullName,$BackupFolder)
+		}
+    }
+}
+
+
+
+
+$logger=[ScreenLogger]::new()
+$folderChecker=[FolderChecker]::new($logger)
+$backupFolderFactory=[BackupFolderFactory]::new($logger,$folderChecker)
+$childFolderProvider=[ChildFolderProvider]::new($logger)
+$archiveFilter=[ArchiveFilter]::new($logger)
+$folderMover=[FolderMover]::new($logger)
+$archiveProcessor = [ArchiveProcessor]::new($logger,$childFolderProvider,$archiveFilter,$folderMover)
+$processor = [Processor]::new($logger,'Archive',$childFolderProvider,$backupFolderFactory,$archiveProcessor)
+
+$processor.ProcessFolder($NiceLogFolder,$BackupFolder);
