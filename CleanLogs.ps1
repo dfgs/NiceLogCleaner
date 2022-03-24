@@ -219,7 +219,7 @@ class BackupFolderFactory:BaseBackupFolderFactory
 		else 
 		{
 			$this.logger.Log( [LogLevel]::Info, "Creating backup folder $FolderName in $Path" )
-			New-Item -Path $Path -Name $FolderName -ItemType "directory"
+			New-Item -Path $Path -Name $FolderName -ItemType "directory" -Confirm:$false
 		}
     }
 }
