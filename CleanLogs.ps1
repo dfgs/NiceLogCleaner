@@ -1,5 +1,5 @@
 [cmdletbinding(SupportsShouldProcess)]
-param ($NiceLogFolder='D:\Program Files\Nice Systems\Logs', $BackupFolder='d:\Backup\Logs')
+param ($NiceLogFolder='D:\Program Files\Nice Systems\Logs', $BackupFolder='d:\Backup\Logs', $NumberOfArchivesToKeep=2)
 
 enum LogLevel 
 {
@@ -159,7 +159,7 @@ class FolderChecker:BaseFolderChecker
 
 class BaseArchiveFilter
 {
-	[File[]] GetOldestFolders([File[]]$Folders) 
+	[File[]] GetOldestFolders([File[]]$Folders,[int]$NumberOfArchivesToKeep) 
 	{
 		write-host "Method not implemented" 
 		return return @()
@@ -174,18 +174,17 @@ class ArchiveFilter:BaseArchiveFilter
 	{
         $this.logger = $Logger
     }
-	[File[]] GetOldestFolders([File[]]$Folders) 
+	[File[]] GetOldestFolders([File[]]$Folders,[int]$NumberOfArchivesToKeep) 
 	{
 		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
-		if ($Folders.Count -eq 0)
+		if ($Folders.Count -le $NumberOfArchivesToKeep)
 		{
 			return @()
 		}
 		$sortedFolders=$Folders | Sort-Object -Property LastWriteTime -Descending
-		$newestFolder=$sortedFolders[0]
-		$this.logger.Log( [LogLevel]::Debug, "Newest archive folder is $($newestFolder.Name)" )
+		
+		return $sortedFolders[$($NumberOfArchivesToKeep)..$($sortedFolders.Count-1)]
 				
-		return $Folders | Where-Object { $_.Name -ne $newestFolder.Name }
 	}
 }
 
@@ -284,7 +283,7 @@ class MockedFolderMover:BaseFolderMover
 class  BaseProcessor
 {
 	
-	[void] ProcessFolder([string]$CurrentFolder,[string]$BackupFolder) 
+	[void] ProcessFolder([string]$CurrentFolder,[string]$BackupFolder,[int]$NumberOfArchivesToKeep) 
 	{
 		write-host "Method not implemented" 
     }
@@ -307,7 +306,7 @@ class Processor:BaseProcessor
 		$this.archiveProcessor=$ArchiveProcessor
     }
 	
-    [void] ProcessFolder([string]$CurrentFolder,[string]$BackupFolder) 
+    [void] ProcessFolder([string]$CurrentFolder,[string]$BackupFolder,[int]$NumberOfArchivesToKeep) 
 	{
 		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
 		$childFolders=$this.childFolderProvider.GetChildFolders($CurrentFolder);
@@ -321,11 +320,11 @@ class Processor:BaseProcessor
 			if ($childFolder.Name -eq $this.archiveFolderName)
 			{
 				$this.logger.Log( [LogLevel]::Info, "Found archive folder in $CurrentFolder" )
-				$this.archiveProcessor.ProcessArchive($newCurrentFolder,$newBackupFolder)
+				$this.archiveProcessor.ProcessArchive($newCurrentFolder,$newBackupFolder,$NumberOfArchivesToKeep)
 			}
 			else 
 			{
-				$this.ProcessFolder($newCurrentFolder,$newBackupFolder )
+				$this.ProcessFolder($newCurrentFolder,$newBackupFolder,$NumberOfArchivesToKeep )
 			}
 		}
     }
@@ -334,7 +333,7 @@ class Processor:BaseProcessor
 class  BaseArchiveProcessor
 {
 	
-	[void] ProcessArchive([string]$CurrentFolder,[string]$BackupFolder) 
+	[void] ProcessArchive([string]$CurrentFolder,[string]$BackupFolder,[int]$NumberOfArchivesToKeep) 
 	{
 		write-host "Method not implemented" 
     }
@@ -355,12 +354,12 @@ class ArchiveProcessor:BaseArchiveProcessor
 		$this.folderMover=$FolderMover
     }
 	
-    [void] ProcessArchive([string]$CurrentFolder,[string]$BackupFolder) 
+    [void] ProcessArchive([string]$CurrentFolder,[string]$BackupFolder,[int]$NumberOfArchivesToKeep) 
 	{
 		$this.logger.Log( [LogLevel]::Debug, "Entering method" )
 		$this.logger.Log( [LogLevel]::Info, "Filtering oldest archive folders" )
 		$childFolders=$this.childFolderProvider.GetChildFolders($CurrentFolder)
-		$filteredFolders=$this.archiveFilter.GetOldestFolders($childFolders)
+		$filteredFolders=$this.archiveFilter.GetOldestFolders($childFolders,$NumberOfArchivesToKeep)
 		foreach ($filteredFolder in $filteredFolders)
 		{
 			$this.folderMover.MoveFolder($filteredFolder.FullName,$BackupFolder)
@@ -389,4 +388,4 @@ $folderMover=[FolderMover]::new($logger)
 $archiveProcessor = [ArchiveProcessor]::new($logger,$childFolderProvider,$archiveFilter,$folderMover)
 $processor = [Processor]::new($logger,'Archive',$childFolderProvider,$backupFolderFactory,$archiveProcessor)
 
-$processor.ProcessFolder($NiceLogFolder,$BackupFolder);
+$processor.ProcessFolder($NiceLogFolder,$BackupFolder,$NumberOfArchivesToKeep);

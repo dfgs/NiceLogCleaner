@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="19" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2022-04-20" time="13:52:38">
+  <environment clr-version="4.0.30319.42000" user-domain="FR" cwd="D:\Projets\NiceLogCleaner" platform="Microsoft Windows 10 Professionnel|C:\WINDOWS|\Device\Harddisk0\Partition2" machine-name="FRLAPL525" nunit-version="2.5.8.0" os-version="10.0.19044" user="GUICHAR1" />
+  <culture-info current-culture="fr-FR" current-uiculture="fr-FR" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="2.8529" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="D:\Projets\NiceLogCleaner\Tests\ArchiveFilter.Tests.ps1" executed="True" result="Success" success="True" time="1.6117" asserts="0" description="D:\Projets\NiceLogCleaner\Tests\ArchiveFilter.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="ArchiveFilter tests" executed="True" result="Success" success="True" time="0.462" asserts="0" description="ArchiveFilter tests">
+            <results>
+              <test-case description="ArchiveFilter should filter several folders, zero archive to keep" name="ArchiveFilter tests.ArchiveFilter should filter several folders, zero archive to keep" time="0.2474" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter several folders, one archive to keep" name="ArchiveFilter tests.ArchiveFilter should filter several folders, one archive to keep" time="0.0216" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter several folders, two archives to keep" name="ArchiveFilter tests.ArchiveFilter should filter several folders, two archives to keep" time="0.0173" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter several folders, four archives to keep" name="ArchiveFilter tests.ArchiveFilter should filter several folders, four archives to keep" time="0.0125" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter one folder" name="ArchiveFilter tests.ArchiveFilter should filter one folder" time="0.0328" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter zero folder" name="ArchiveFilter tests.ArchiveFilter should filter zero folder" time="0.0168" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter folders when NumberOfArchiveToKeep is equal to number of archives" name="ArchiveFilter tests.ArchiveFilter should filter folders when NumberOfArchiveToKeep is equal to number of archives" time="0.0107" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveFilter should filter folders when NumberOfArchiveToKeep is greater than number of archives" name="ArchiveFilter tests.ArchiveFilter should filter folders when NumberOfArchiveToKeep is greater than number of archives" time="0.0147" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="D:\Projets\NiceLogCleaner\Tests\ArchiveProcessor.Tests.ps1" executed="True" result="Success" success="True" time="0.5552" asserts="0" description="D:\Projets\NiceLogCleaner\Tests\ArchiveProcessor.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="ArchiveProcessor tests" executed="True" result="Success" success="True" time="0.2028" asserts="0" description="ArchiveProcessor tests">
+            <results>
+              <test-case description="ArchiveProcessor should move files, zero archive to keep" name="ArchiveProcessor tests.ArchiveProcessor should move files, zero archive to keep" time="0.1173" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveProcessor should move files, one archive to keep" name="ArchiveProcessor tests.ArchiveProcessor should move files, one archive to keep" time="0.0215" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveProcessor should move files, two archives to keep" name="ArchiveProcessor tests.ArchiveProcessor should move files, two archives to keep" time="0.0205" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="ArchiveProcessor should move files, five archives to keep" name="ArchiveProcessor tests.ArchiveProcessor should move files, five archives to keep" time="0.0293" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="D:\Projets\NiceLogCleaner\Tests\FolderChecker.Tests.ps1" executed="True" result="Success" success="True" time="0.2647" asserts="0" description="D:\Projets\NiceLogCleaner\Tests\FolderChecker.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="FolderChecker tests" executed="True" result="Success" success="True" time="0.0629" asserts="0" description="FolderChecker tests">
+            <results>
+              <test-case description="FolderChecker should find C: path" name="FolderChecker tests.FolderChecker should find C: path" time="0.0246" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="FolderChecker should find C:\Windows path" name="FolderChecker tests.FolderChecker should find C:\Windows path" time="0.0127" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="FolderChecker should not find Z:\no_exists path" name="FolderChecker tests.FolderChecker should not find Z:\no_exists path" time="0.0147" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="D:\Projets\NiceLogCleaner\Tests\Processor.Tests.ps1" executed="True" result="Success" success="True" time="0.4213" asserts="0" description="D:\Projets\NiceLogCleaner\Tests\Processor.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Processor tests" executed="True" result="Success" success="True" time="0.2076" asserts="0" description="Processor tests">
+            <results>
+              <test-case description="Processor should move files, zero archive to keep" name="Processor tests.Processor should move files, zero archive to keep" time="0.0365" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Processor should move files, one archive to keep" name="Processor tests.Processor should move files, one archive to keep" time="0.0391" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Processor should move files, two archives to keep" name="Processor tests.Processor should move files, two archives to keep" time="0.0646" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="Processor should move files, five archives to keep" name="Processor tests.Processor should move files, five archives to keep" time="0.0493" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
